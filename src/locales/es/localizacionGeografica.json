@@ -35,10 +35,23 @@
   },
   "confirm": {
     "title": "Activar/Inactivar {{type}}",
-    "message": "\u00bfEst\u00e1 seguro que desea {{action}} este registro?",
-    "impactIntro": "Esta acci\u00f3n afectar\u00e1 los siguientes registros asociados:",
-    "notShown": "No aparecer\u00e1n en los selectores del sistema.",
-    "departmentsAffected": "{{count}} Departamentos pasar\u00e1n a estado Inactivo",
-    "municipalitiesAffected": "{{count}} Municipios pasar\u00e1n a estado Inactivo"
+    "message": "Está seguro que desea {{action}} este registro?",
+    "impactIntro": "Esta acción afectará los siguientes registros asociados:",
+    "notShown": "No aparecerán en los selectores del sistema.",
+    "departmentsAffected": "{{count}} Departamentos pasarán a estado Inactivo",
+    "municipalitiesAffected": "{{count}} Municipios pasarán a estado Inactivo"
+  },
+  "messages": {
+    "loadError": "Error al cargar países",
+    "paisCreated": "País creado con éxito",
+    "paisUpdated": "País actualizado con éxito",
+    "deptoCreated": "Departamento creado con éxito",
+    "deptoUpdated": "Departamento actualizado con éxito",
+    "municipioCreated": "Municipio creado con éxito",
+    "municipioUpdated": "Municipio actualizado con éxito",
+    "saveError": "Error al guardar:",
+    "activatedSuccess": "Registro activado con éxito",
+    "inactivatedSuccess": "Registro inactivado con éxito",
+    "actionError": "Error al cambiar estado:"
   }
 }

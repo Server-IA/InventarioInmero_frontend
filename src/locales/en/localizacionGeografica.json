@@ -40,5 +40,18 @@
     "notShown": "They will not appear in system selectors.",
     "departmentsAffected": "{{count}} departments will become inactive",
     "municipalitiesAffected": "{{count}} municipalities will become inactive"
+  },
+  "messages": {
+    "loadError": "Error loading countries",
+    "paisCreated": "Country created successfully",
+    "paisUpdated": "Country updated successfully",
+    "deptoCreated": "Department created successfully",
+    "deptoUpdated": "Department updated successfully",
+    "municipioCreated": "Municipality created successfully",
+    "municipioUpdated": "Municipality updated successfully",
+    "saveError": "Error saving:",
+    "activatedSuccess": "Record activated successfully",
+    "inactivatedSuccess": "Record inactivated successfully",
+    "actionError": "Error changing status:"
   }
 }
