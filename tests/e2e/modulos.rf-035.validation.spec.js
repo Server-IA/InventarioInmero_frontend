@@ -142,7 +142,7 @@ test.describe('RF-035.0 - Gestión de módulos (validaciones y errores)', () => 
     requireEnv('E2E_NOADMIN_PASSWORD', NOADMIN_PASSWORD);
 
     await authenticateByApi(page, request, NOADMIN_EMAIL, NOADMIN_PASSWORD);
-    await page.goto('/coagronet/');
+    await page.goto('/inventario/');
 
     const unauthorizedUiMessage = page.getByText(/Error cargando módulos|acceso denegado|forbidden/i);
     await expect(unauthorizedUiMessage.first()).toBeVisible({ timeout: 20000 });

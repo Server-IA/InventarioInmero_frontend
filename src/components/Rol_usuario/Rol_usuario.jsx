@@ -77,7 +77,7 @@ export default function Rol_usuario({ onUserAdded }) {
 
     try {
       await axios.post(
-        "https://dev.api.inmero.co/coagronet/auth/empresa/usuario-roles",
+        "https://dev.api.inmero.co/inventario/auth/empresa/usuario-roles",
         {
           ...formData,
           rolId: Number(formData.rolId),

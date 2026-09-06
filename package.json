@@ -4,7 +4,7 @@
   "version": "0.4.0",
   "proxy": "http://172.16.79.156:8080",
   "type": "module",
-  "homepage": "/coagronet",
+  "homepage": "/inventario",
   "scripts": {
     "autodoc": "node docgen.mjs",
     "docs": "jsdoc -c jsdoc.json",

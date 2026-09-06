@@ -175,7 +175,7 @@ const App = () => {
     setIsAuthenticated(true);
 
     // ðŸ”¥ ONBOARDING PERSONA
-    if (location.pathname === "/coagronet/onboarding/persona") {
+    if (location.pathname === "/inventario/onboarding/persona") {
       setCurrentModule(
         <FormRegistroPersona setCurrentModule={setCurrentModule} />,
       );
@@ -183,7 +183,7 @@ const App = () => {
     }
 
     // ðŸ”¥ ONBOARDING EMPRESA
-    if (location.pathname === "/coagronet/onboarding/empresa") {
+    if (location.pathname === "/inventario/onboarding/empresa") {
       setCurrentModule(
         <FormRegistroEmpresa setCurrentModule={setCurrentModule} />,
       );
@@ -191,20 +191,20 @@ const App = () => {
     }
 
     // ðŸ”¥ CAMBIO PASSWORD INICIAL
-    if (location.pathname === "/coagronet/auth/change-password-initial") {
+    if (location.pathname === "/inventario/auth/change-password-initial") {
       setCurrentModule(<ChangePasswordInitial />);
       return;
     }
 
     // ðŸ”¹ DASHBOARD PRINCIPAL
-    if (location.pathname === "/" || location.pathname === "/coagronet") {
+    if (location.pathname === "/" || location.pathname === "/inventario") {
       setCurrentModule(<Contenido setCurrentModule={setCurrentModule} />);
     }
   }, [location.pathname]);
 
   const isOnboarding =
-    location.pathname.startsWith("/coagronet/onboarding") ||
-    location.pathname.startsWith("/coagronet/auth");
+    location.pathname.startsWith("/inventario/onboarding") ||
+    location.pathname.startsWith("/inventario/auth");
 
   const isPublic = !isAuthenticated || isOnboarding;
 

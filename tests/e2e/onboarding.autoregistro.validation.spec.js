@@ -117,7 +117,7 @@ test.describe.skip('Autorregistro y onboarding - validaciones/edge cases', () =>
 
     // Usamos un email que ya está registrado (admin del sistema) para forzar duplicado.
     await goToRegisterFromHome(page);
-    await fillFieldByName(page, 'email', ONBOARDING_STATE2_EMAIL || 'admin@coagronet.com');
+    await fillFieldByName(page, 'email', ONBOARDING_STATE2_EMAIL || 'admin@inventario.com');
     await fillFieldByName(page, 'password', AUTOREGISTER_PASSWORD);
     await clickPrimaryButton(page, /register|registrar/i);
 
