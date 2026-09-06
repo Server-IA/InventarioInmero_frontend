@@ -200,14 +200,44 @@ export default function EmpresaRol() {
 
   const hasActiveFilters = Boolean(filters.empresaId || filters.rolId || filters.estadoId);
 
+  // Determinar la empresa efectiva seleccionada en el modal (o la empresa de sesión si no es admin sistema)
+  const effectiveFilterEmpresaId = isSystemAdmin ? tempFilters.empresaId : empresaId;
+
+  // Opciones de roles disponibles en el modal según empresa seleccionada (híbrido/cascada)
+  const availableFilterRoles = useMemo(() => {
+    if (effectiveFilterEmpresaId) {
+      // Filtrar a partir de las filas ya cargadas para esa empresa
+      const rowsForCompany = rows.filter(
+        (r) => String(r.empresaId ?? empresaId) === String(effectiveFilterEmpresaId)
+      );
+      const uniqueRoleNames = Array.from(
+        new Set(rowsForCompany.map((r) => r.rolNombre).filter(Boolean))
+      );
+      return uniqueRoleNames.map((roleName) => {
+        const found = roles.find((r) => r.name === roleName);
+        return {
+          id: found ? String(found.id) : roleName,
+          name: roleName,
+        };
+      });
+    }
+
+    // Sin empresa seleccionada (Admin Sistema viendo todo): catálogo global completo
+    return roles.map((r) => ({
+      id: String(r.id),
+      name: r.name || r.nombre,
+    }));
+  }, [effectiveFilterEmpresaId, rows, empresaId, roles]);
+
   const filteredRows = useMemo(() => {
     return rows.filter((row) => {
-      if (filters.empresaId && String(row.empresaId) !== String(filters.empresaId)) {
+      if (filters.empresaId && String(row.empresaId ?? empresaId) !== String(filters.empresaId)) {
         return false;
       }
       if (filters.rolId) {
         const selectedRol = roles.find((r) => String(r.id) === String(filters.rolId));
-        if (selectedRol && row.rolNombre !== selectedRol.name) {
+        const targetName = selectedRol ? selectedRol.name : filters.rolId;
+        if (row.rolNombre !== targetName) {
           return false;
         }
       }
@@ -223,7 +253,7 @@ export default function EmpresaRol() {
       }
       return true;
     });
-  }, [rows, filters, roles]);
+  }, [rows, filters, roles, empresaId]);
 
   const handleViewPermisos = () => {
     if (!selectedRow?.id) {
@@ -461,9 +491,17 @@ export default function EmpresaRol() {
                   labelId="empresa-filter-label"
                   value={tempFilters.empresaId}
                   label={t("common.labels.company", "Empresa")}
-                  onChange={(e) =>
-                    setTempFilters((prev) => ({ ...prev, empresaId: e.target.value }))
-                  }
+                  onChange={(e) => {
+                    const newEmpresaId = e.target.value;
+                    setTempFilters((prev) => {
+                      // Al cambiar empresa, resetear rolId si ya no existe en la nueva empresa
+                      return {
+                        ...prev,
+                        empresaId: newEmpresaId,
+                        rolId: "",
+                      };
+                    });
+                  }}
                 >
                   <MenuItem value="">
                     <em>{t("common.labels.all", "Todos")}</em>
@@ -492,9 +530,9 @@ export default function EmpresaRol() {
                 <MenuItem value="">
                   <em>{t("common.labels.all", "Todos")}</em>
                 </MenuItem>
-                {roles.map((r) => (
+                {availableFilterRoles.map((r) => (
                   <MenuItem key={r.id} value={r.id}>
-                    {r.name || r.nombre}
+                    {r.name}
                   </MenuItem>
                 ))}
               </Select>
