@@ -15,7 +15,7 @@ import react from "@vitejs/plugin-react";
 export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
-    base: "/coagronet",
+    base: "/inventario",
     test: {
       environment: "jsdom",
       globals: true,

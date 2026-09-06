@@ -81,7 +81,7 @@ function ChangePasswordInitial() {
     try {
       setLoading(true);
 
-      const url = "https://dev.api.inmero.co/coagronet/auth/change-password-initial";
+      const url = "https://dev.api.inmero.co/inventario/auth/change-password-initial";
 
       await axios.post(
         url,

@@ -29,8 +29,8 @@ E2E_NOADMIN_EMAIL=
 E2E_NOADMIN_PASSWORD=
 
 # Configuración opcional de Playwright
-E2E_BASE_URL=http://127.0.0.1:5173/coagronet
-E2E_WEB_SERVER_URL=http://127.0.0.1:5173/coagronet
+E2E_BASE_URL=http://127.0.0.1:5173/inventario
+E2E_WEB_SERVER_URL=http://127.0.0.1:5173/inventario
 E2E_WEB_SERVER_COMMAND=npm run dev -- --host 127.0.0.1 --port 5173
 
 # MailHog para capturar correo de verificación en E2E
