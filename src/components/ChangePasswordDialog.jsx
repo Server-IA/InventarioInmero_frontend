@@ -14,7 +14,7 @@ const decodeJwt = (jwt) => {
   } catch { return {}; }
 };
 
-// helper para respetar /coagronet
+// helper para respetar /inventario
 const go = (path = "") => {
   const base = import.meta.env.BASE_URL || "/";
   const sep = base.endsWith("/") ? "" : "/";
@@ -117,7 +117,7 @@ export default function ChangePasswordDialog({ open, setOpen, setMessage }) {
       // Si ya quedó inválido -> forzar logout
       if (status === 401 || status === 403) {
         clearAuth();
-        setTimeout(() => go("/coagronet"), 800);
+        setTimeout(() => go("/inventario"), 800);
       }
     } finally {
       setSubmitting(false);

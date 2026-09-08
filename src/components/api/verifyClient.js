@@ -2,12 +2,11 @@
 import axios from "axios";
 
 // Usa VITE_BACKEND_URI tal cual y SOLO quita un /api final si viniera.
-// NO elimines /coagronet.
 const BACKEND_BASE = (import.meta.env.VITE_BACKEND_URI || "").replace(/\/api\/?$/, "");
 
 // Cliente "público" SOLO para verify (sin interceptores ni /api)
 const verifyAxios = axios.create({
-  baseURL: BACKEND_BASE, // p.ej. https://dev.api.inmero.co/coagronet
+  baseURL: BACKEND_BASE, //
   headers: { "Content-Type": "application/json" },
 });
 
