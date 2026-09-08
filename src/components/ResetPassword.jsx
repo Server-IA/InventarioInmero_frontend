@@ -68,7 +68,7 @@ export default function ResetPassword({ token: propToken, setCurrentModule }) {
 
         setMessage('Contraseña restablecida exitosamente. Redirigiendo al inicio de sesión…');
         // Redirige al login (recomendado por el flujo de revocación por tver)
-        setTimeout(() => window.location.replace('/coagronet'), 1000);
+        setTimeout(() => window.location.replace('/inventario'), 1000);
       } else {
         setError(data?.message || 'Error al restablecer contraseña.');
       }

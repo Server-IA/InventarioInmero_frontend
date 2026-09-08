@@ -214,7 +214,7 @@ switch (estado) {
         localStorage.removeItem("activeModule");
         localStorage.removeItem("activeMenu");
         props.setIsAuthenticated?.(true);
-        navigate("/coagronet/onboarding/persona", { replace: true });
+        navigate("/inventario/onboarding/persona", { replace: true });
         break;
     }
     case 3: {
@@ -228,7 +228,7 @@ switch (estado) {
         localStorage.removeItem("activeModule");
         localStorage.removeItem("activeMenu");
         props.setIsAuthenticated?.(true);
-        navigate("/coagronet/onboarding/empresa", { replace: true });
+        navigate("/inventario/onboarding/empresa", { replace: true });
         break;
     }
 
@@ -257,7 +257,7 @@ switch (estado) {
         localStorage.removeItem("activeModule");
         localStorage.removeItem("activeMenu");
 
-      navigate("/coagronet/auth/change-password-initial", { replace: true });
+      navigate("/inventario/auth/change-password-initial", { replace: true });
               break;
           }
           // ---------------------------
@@ -268,7 +268,7 @@ switch (estado) {
         const { empresaIdE, rolIdE, empresaNombreE } = ensureEmpresaRol();
         persistAuth(token, { empresaId: empresaIdE, rolId: rolIdE, empresaNombre: empresaNombreE, rolesByCompany, decodeJwt });
       props.setIsAuthenticated?.(true);
-        navigate("/coagronet/", { replace: true });
+        navigate("/inventario/", { replace: true });
         break;
     }
 }
