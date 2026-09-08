@@ -2,6 +2,7 @@ import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 
 // Mock the axiosConfig module that ForgotPassword uses
 vi.mock("../components/axiosConfig", () => ({
@@ -150,5 +151,53 @@ describe("ForgotPassword", () => {
 
     // Clean up
     resolvePost({ data: {} });
+  });
+
+  it("renders with high contrast in dark mode for 'Volver a iniciar sesión'", () => {
+    const darkTheme = createTheme({
+      palette: {
+        mode: "dark",
+        primary: { main: "#0F2327" },
+        text: { primary: "#E0E0E0" },
+      },
+    });
+
+    render(
+      <ThemeProvider theme={darkTheme}>
+        <ForgotPassword setCurrentModule={setCurrentModule} />
+      </ThemeProvider>
+    );
+
+    const backButton = screen.getByRole("button", { name: /volver a iniciar sesión/i });
+    expect(backButton).toBeInTheDocument();
+    // In dark mode, color should not be the dark brand green #0F2327
+    expect(backButton).toHaveStyle({ color: "rgb(224, 224, 224)" });
+  });
+
+  it("renders translated texts when language is English", async () => {
+    const { default: i18n } = await import("../i18n.js");
+    await i18n.changeLanguage("en");
+
+    render(<ForgotPassword setCurrentModule={setCurrentModule} />);
+
+    expect(
+      screen.getByRole("heading", { name: /reset your password/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/we will send a reset link to your email/i)
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /send recovery link/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /back to login/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/if you do not receive the email/i)
+    ).toBeInTheDocument();
+
+    // Reset language back to Spanish
+    await i18n.changeLanguage("es");
   });
 });
