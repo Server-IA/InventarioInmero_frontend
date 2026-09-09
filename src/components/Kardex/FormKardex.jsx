@@ -1,4 +1,4 @@
-﻿/*=============================================================================
+/*=============================================================================
 Nombre del archivo : FormKardex.jsx
 Descripcion        : Formulario maestro y detalle para gestion de Kardex.
 ===============================================================================
@@ -7,9 +7,10 @@ CONTROL DE CAMBIOS
 |   Fecha    | Version |      Autor           | Descripcion del cambio      |
 +------------+---------+----------------------+-----------------------------+
 | 2026-05-08 | 0.4.0   | Jeisson Sanchez      | Encabezado estandar agregado.|
+| 2026-09-09 | 0.4.0   | Cesar Medina         | Preserva encabezado y detalle entre pasos. |
 +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -27,6 +28,7 @@ import {
   InputAdornment,
   IconButton,
 } from "@mui/material";
+import PropTypes from "prop-types";
 import SearchIcon from "@mui/icons-material/Search";
 import axios from "../axiosConfig";
 import * as Yup from "yup";
@@ -126,6 +128,19 @@ const DEFAULT_ARTICLE_FILTERS = {
   productoId: "",
 };
 
+const EMPTY_FORM_DATA = {
+  id: undefined,
+  fechaHora: "",
+  almacenId: "",
+  almacenDestinoId: "",
+  produccionId: "",
+  tipoMovimientoId: "",
+  pedidoId: "",
+  ordenCompraId: "",
+  clienteProveedorId: "",
+  descripcion: "",
+};
+
 const toNumericIdOrNull = (value) => {
   if (value === null || value === undefined || value === "") return null;
   const n = Number(value);
@@ -193,6 +208,9 @@ export default function FormKardex({
   const [fetchedPresentacionIds, setFetchedPresentacionIds] = useState({});
   const [articleFiltersOpen, setArticleFiltersOpen] = useState(false);
   const [articleFilters, setArticleFilters] = useState(DEFAULT_ARTICLE_FILTERS);
+  const createSessionInitializedRef = useRef(false);
+  const editSessionKeyRef = useRef(null);
+  const [pendingEditFallback, setPendingEditFallback] = useState(null);
 
   const token = localStorage.getItem("token");
   const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
@@ -476,6 +494,22 @@ export default function FormKardex({
     return "Seleccionar";
   }, [lookupType]);
 
+  const buildFallbackFormData = (row, kardexId, currentData = EMPTY_FORM_DATA) => ({
+    id: currentData?.id ?? kardexId,
+    fechaHora: currentData?.fechaHora || toDateTimeLocal(row?.fechaHora),
+    almacenId: currentData?.almacenId || findIdByName(almacenes, row?.nombreAlmacen),
+    almacenDestinoId:
+      currentData?.almacenDestinoId || findIdByName(almacenes, row?.nombreAlmacenDestino),
+    produccionId: currentData?.produccionId || findIdByName(producciones, row?.nombreProduccion),
+    tipoMovimientoId:
+      currentData?.tipoMovimientoId || findIdByName(tiposMovimiento, row?.nombreTipoMovimiento),
+    pedidoId: currentData?.pedidoId ?? "",
+    ordenCompraId: currentData?.ordenCompraId ?? "",
+    clienteProveedorId:
+      currentData?.clienteProveedorId || findIdByName(empresas, row?.nombreClienteProveedor),
+    descripcion: currentData?.descripcion ?? "",
+  });
+
   useEffect(() => {
     if (!open && !articleModalOpen) return;
 
@@ -674,30 +708,34 @@ export default function FormKardex({
   }, [presentaciones]);
 
   useEffect(() => {
-    if (!open) return;
+    if (open || articleModalOpen) return;
+    createSessionInitializedRef.current = false;
+    editSessionKeyRef.current = null;
+    setPendingEditFallback(null);
+  }, [open, articleModalOpen]);
+
+  useEffect(() => {
+    if (!open || formMode !== "create" || createSessionInitializedRef.current) return;
+
+    setFormData({ ...EMPTY_FORM_DATA });
+    setDraftItems([]);
+    setArticleSelectedRow(null);
+    setErrors({});
+    setPendingEditFallback(null);
+    createSessionInitializedRef.current = true;
+  }, [open, formMode]);
+
+  useEffect(() => {
+    if (!open || formMode !== "edit") return;
+
+    const kardexId = resolveKardexId(selectedRow);
+    if (!kardexId) return;
+
+    const sessionKey = String(kardexId);
+    if (editSessionKeyRef.current === sessionKey) return;
+    editSessionKeyRef.current = sessionKey;
 
     const loadEditData = async () => {
-      if (formMode !== "edit") {
-        setFormData({
-          id: undefined,
-          fechaHora: "",
-          almacenId: "",
-          almacenDestinoId: "",
-          produccionId: "",
-          tipoMovimientoId: "",
-          pedidoId: "",
-          ordenCompraId: "",
-          clienteProveedorId: "",
-          descripcion: "",
-        });
-        setDraftItems([]);
-        setArticleSelectedRow(null);
-        return;
-      }
-
-      const kardexId = resolveKardexId(selectedRow);
-      if (!kardexId) return;
-
       try {
         const res = await axios.get(`/v1/kardex/${kardexId}/update-form`, headers);
         const data = res?.data ?? {};
@@ -708,7 +746,8 @@ export default function FormKardex({
           almacenId: data.almacenId ?? "",
           almacenDestinoId: data.almacenDestinoId ?? "",
           produccionId: data.produccionId ?? "",
-          tipoMovimientoId: data.tipoMovimientoId ?? findIdByName(tiposMovimiento, selectedRow?.nombreTipoMovimiento),
+          tipoMovimientoId:
+            data.tipoMovimientoId ?? findIdByName(tiposMovimiento, selectedRow?.nombreTipoMovimiento),
           pedidoId: data.pedidoId ?? "",
           ordenCompraId: data.ordenCompraId ?? "",
           clienteProveedorId: data.clienteProveedorId ?? "",
@@ -734,23 +773,13 @@ export default function FormKardex({
         }));
 
         setDraftItems(mapped);
+        setPendingEditFallback(null);
       } catch {
-        const kardexIdFallback = resolveKardexId(selectedRow);
-        setFormData({
-          id: kardexIdFallback,
-          fechaHora: toDateTimeLocal(selectedRow?.fechaHora),
-          almacenId: findIdByName(almacenes, selectedRow?.nombreAlmacen),
-          almacenDestinoId: findIdByName(almacenes, selectedRow?.nombreAlmacenDestino),
-          produccionId: findIdByName(producciones, selectedRow?.nombreProduccion),
-          tipoMovimientoId: findIdByName(tiposMovimiento, selectedRow?.nombreTipoMovimiento),
-          pedidoId: "",
-          ordenCompraId: "",
-          clienteProveedorId: findIdByName(empresas, selectedRow?.nombreClienteProveedor),
-          descripcion: "",
-        });
+        setFormData(buildFallbackFormData(selectedRow, kardexId));
+        setPendingEditFallback({ kardexId, selectedRow });
 
         try {
-          const itemsRes = await axios.get(`/v1/kardex/${kardexIdFallback}/items`, {
+          const itemsRes = await axios.get(`/v1/kardex/${kardexId}/items`, {
             ...headers,
             params: { page: 0, size: 200, sort: "id,desc" },
           });
@@ -780,7 +809,22 @@ export default function FormKardex({
     };
 
     loadEditData();
-  }, [open, formMode, selectedRow, tiposMovimiento, almacenes, producciones, empresas]);
+  }, [open, formMode, selectedRow]);
+
+  useEffect(() => {
+    if (!open || formMode !== "edit" || !pendingEditFallback) return;
+
+    setFormData((prev) => buildFallbackFormData(pendingEditFallback.selectedRow, pendingEditFallback.kardexId, prev));
+
+    if (
+      tiposMovimiento.length > 0 &&
+      almacenes.length > 0 &&
+      producciones.length > 0 &&
+      empresas.length > 0
+    ) {
+      setPendingEditFallback(null);
+    }
+  }, [open, formMode, pendingEditFallback, tiposMovimiento, almacenes, producciones, empresas]);
 
   useEffect(() => {
     if (!open || !isEntradaUi || !formData.pedidoId) {
@@ -813,6 +857,9 @@ export default function FormKardex({
 
   const handleHeaderChange = (e) => {
     const { name, value } = e.target;
+    if (pendingEditFallback) {
+      setPendingEditFallback(null);
+    }
     const numeric = [
       "almacenId",
       "almacenDestinoId",
@@ -902,7 +949,7 @@ export default function FormKardex({
   const mapDraftItemsToPayload = (resolveDevolutivoByPresentacionId) => {
     const rows = draftItems || [];
     const unique = new Map();
-    rows.forEach((it, idx) => {
+    rows.forEach((it) => {
       const key =
         toNumericIdOrNull(it?.id) != null
           ? `id:${toNumericIdOrNull(it?.id)}`
@@ -1001,7 +1048,7 @@ export default function FormKardex({
       precio: latestRow?.precio ?? "",
       lote: latestRow?.lote ?? "",
       devolutivo: Boolean(devolutivoFromPresentacion),
-      responsableId: Boolean(devolutivoFromPresentacion) ? toNumericIdOrNull(latestRow?.responsableId) : null,
+      responsableId: devolutivoFromPresentacion ? toNumericIdOrNull(latestRow?.responsableId) : null,
       fechaVencimiento: latestRow?.fechaVencimiento
         ? String(latestRow.fechaVencimiento).substring(0, 10)
         : "",
@@ -1721,5 +1768,31 @@ export default function FormKardex({
     </Box>
   );
 }
+
+FormKardex.propTypes = {
+  open: PropTypes.bool.isRequired,
+  setOpen: PropTypes.func.isRequired,
+  formMode: PropTypes.oneOf(["create", "edit"]),
+  startInArticles: PropTypes.bool,
+  selectedRow: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    fechaHora: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
+    nombreTipoMovimiento: PropTypes.string,
+    nombreAlmacen: PropTypes.string,
+    nombreAlmacenDestino: PropTypes.string,
+    nombreProduccion: PropTypes.string,
+    nombreClienteProveedor: PropTypes.string,
+  }),
+  reloadData: PropTypes.func,
+  setMessage: PropTypes.func.isRequired,
+  setSelectedRow: PropTypes.func.isRequired,
+};
+
+FormKardex.defaultProps = {
+  formMode: "create",
+  startInArticles: false,
+  selectedRow: null,
+  reloadData: undefined,
+};
 
 
