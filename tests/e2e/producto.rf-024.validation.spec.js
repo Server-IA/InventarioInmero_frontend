@@ -53,12 +53,12 @@ test.describe('RF-024 - Gestión de Productos (validaciones UI)', () => {
     requireEnv('E2E_NOADMIN_PASSWORD', NOADMIN_PASSWORD);
 
     await authenticateByApi(page, request, NOADMIN_EMAIL, NOADMIN_PASSWORD);
-    await page.goto('/coagronet/');
+    await page.goto('/inventario/');
 
     await page.evaluate(() => {
       localStorage.setItem('activeModule', 'producto');
     });
-    await page.goto('/coagronet/');
+    await page.goto('/inventario/');
 
     const unauthorizedMsg = page.getByText(
       /Error cargando|acceso denegado|forbidden|no autorizado/i

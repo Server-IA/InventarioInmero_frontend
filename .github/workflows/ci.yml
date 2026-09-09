@@ -37,7 +37,7 @@ jobs:
       - name: Build (back desplegado)
         run: |
           npm run build
-          ln -sf . dist/coagronet
+          ln -sf . dist/inventario
         env:
           VITE_BACKEND_URI: https://dev.api.inmero.co/inventario
 
@@ -50,7 +50,7 @@ jobs:
       - name: Wait for serve
         run: |
           for i in $(seq 1 30); do
-            curl -s -o /dev/null -w "%{http_code}" http://localhost:5173/coagronet/ | grep -q 200 && break
+            curl -s -o /dev/null -w "%{http_code}" http://localhost:5173/inventario/ | grep -q 200 && break
             sleep 2
           done
 
