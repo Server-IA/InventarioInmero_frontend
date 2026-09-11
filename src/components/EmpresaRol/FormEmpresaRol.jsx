@@ -7,6 +7,8 @@ CONTROL DE CAMBIOS
 |   Fecha    | Versión |      Autor           | Descripción del cambio                        |
 +------------+---------+----------------------+-----------------------------------------------+
 | 2026-05-22 | 0.4.0   | Cesar Medina         | Se corrige referencia de tema en el modal.    |
+| 2026-08-25 | 0.4.0   | Jeisson Sanchez      | [Issue #277] Enviar empresa elegida al crear. |
+| 2026-08-25 | 0.4.0   | Jeisson Sanchez      | [Issue #278] Enviar empresa objetivo al quitar permiso. |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 import React, { useEffect, useState } from "react";
@@ -286,7 +288,10 @@ const agruparPorSubsistema = (modulosArray) => {
     try {
       await axios.delete(
         `/v1/empresa-rol-permisos/rol/${rolId}/permisos/quitar`,
-        { data: { permisosId: [permisoId] } }
+        {
+          data: { permisosId: [permisoId] },
+          ...(isSystemAdmin ? { params: { empresaId: getTargetEmpresaId() } } : {}),
+        }
       );
 
       setPermisosSeleccionados((prev) =>
@@ -334,17 +339,17 @@ const handleSave = async () => {
     setLoading(true);
 
     if (!isEdit) {
-        await axios.post(
-          isSystemAdmin ? "/v1/system/empresa-rol" : "/v1/empresa-rol",
-          isSystemAdmin
-            ? {
-                empresaId: Number(selectedRow?.empresaId ?? empresaId),
-                rolId: Number(rolId),
-              }
-            : {
-                rolId: Number(rolId),
-              }
-        );
+      await axios.post(
+        isSystemAdmin ? "/v1/system/empresa-rol" : "/v1/empresa-rol",
+        isSystemAdmin
+          ? {
+              empresaId: getTargetEmpresaId(),
+              rolId: Number(rolId),
+            }
+          : {
+              rolId: Number(rolId),
+            }
+      );
     }
 
     let modulosALL = [];
@@ -673,3 +678,20 @@ const subsistemasAgrupados = agruparPorSubsistema(modulos);
     </Dialog>
   );
 }
+
+FormEmpresaRol.propTypes = {
+  open: PropTypes.bool.isRequired,
+  setOpen: PropTypes.func.isRequired,
+  selectedRow: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    empresaId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    rolId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    rolNombre: PropTypes.string,
+  }),
+  setSelectedRow: PropTypes.func.isRequired,
+  setMessage: PropTypes.func.isRequired,
+  reloadData: PropTypes.func.isRequired,
+  roles: PropTypes.array,
+  empresaId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  isSystemAdmin: PropTypes.bool,
+};

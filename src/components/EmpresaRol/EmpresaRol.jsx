@@ -77,12 +77,13 @@ export default function EmpresaRol() {
       const resRoles = await axios.get("/v1/items/rol/0");
       const rolesCatalogo = resRoles.data;
 
+      let anyPermisoError = false;
       const enriched = await Promise.all(
         empresaRoles.map(async (empresaRol) => {
           const rolBase = rolesCatalogo.find((r) => r.name === empresaRol.rolNombre);
 
           if (!rolBase) {
-            return { ...empresaRol, permisos: [] };
+            return { ...empresaRol, permisos: [], permisosError: false };
           }
 
           try {
@@ -94,24 +95,40 @@ export default function EmpresaRol() {
             return {
               ...empresaRol,
               permisos: permisosRes.data || [],
+              permisosError: false,
             };
-          } catch {
+          } catch (err) {
+            console.error(`Error consultando permisos para rol ${rolBase.name}:`, err);
+            anyPermisoError = true;
             return {
               ...empresaRol,
-              permisos: [],
+              permisos: null,
+              permisosError: true,
             };
           }
         })
       );
 
       setRows(enriched);
+      if (anyPermisoError) {
+        setMessage({
+          open: true,
+          severity: "error",
+          text: t("empresaRol.messages.permissionsQueryError", "Error al consultar los permisos de uno o más roles. Puede reintentar la consulta."),
+        });
+      }
     } catch (error) {
       console.error(error);
       setRows([]);
+      setMessage({
+        open: true,
+        severity: "error",
+        text: t("empresaRol.messages.rolesLoadError", "Error al cargar roles de empresa."),
+      });
     } finally {
       setLoading(false);
     }
-  }, [empresaId, isSystemAdmin]);
+  }, [empresaId, isSystemAdmin, t]);
 
   // CARGAR CATÁLOGO DE ROLES (solo para el formulario)
   const loadRoles = useCallback(async () => {
@@ -251,6 +268,40 @@ export default function EmpresaRol() {
           minWidth: 320,
           sortable: false,
           renderCell: (params) => {
+            if (params.row.permisosError) {
+              return (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    color: "error.main",
+                    fontStyle: "italic",
+                    fontSize: "12px",
+                  }}
+                >
+                  <span>{t("empresaRol.permissions.errorLoading", "Error al cargar permisos")}</span>
+                  <Button
+                    size="small"
+                    variant="text"
+                    color="primary"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      reloadData();
+                    }}
+                    sx={{
+                      minWidth: "auto",
+                      p: "2px 6px",
+                      fontSize: "11px",
+                      textTransform: "none",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {t("common.actions.retry", "Reintentar")}
+                  </Button>
+                </Box>
+              );
+            }
             const permisos = Array.isArray(params.row.permisos) ? params.row.permisos : [];
             if (permisos.length === 0) {
               return (
@@ -357,6 +408,8 @@ export default function EmpresaRol() {
         onClose={() => setModalPermisosOpen(false)}
         permisos={selectedRow?.permisos || []}
         rolNombre={selectedRow?.rolNombre}
+        permisosError={Boolean(selectedRow?.permisosError)}
+        onRetry={reloadData}
       />
 
       <AppDataGrid

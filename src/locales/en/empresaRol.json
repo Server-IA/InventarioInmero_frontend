@@ -21,10 +21,14 @@
     "roleRequired": "You must select a role",
     "companyRequired": "You must select a company",
     "saveSuccess": "Permissions updated successfully",
-    "saveError": "Error saving permissions"
+    "saveError": "Error saving permissions",
+    "permissionsQueryError": "Error querying permissions for one or more roles. You can retry the query.",
+    "rolesLoadError": "Error loading company roles."
   },
   "permissions": {
     "withoutPermissions": "No permissions",
+    "errorLoading": "Error loading permissions",
+    "rolePermissionsError": "Could not load permissions due to a connection or server error.",
     "withPermissionsModules": "This role has permissions in the following modules",
     "withoutAssignedPermissions": "Modules without assigned permissions",
     "withoutAssignedPermissionsHelp": "These modules have no permissions. You can assign them if needed.",

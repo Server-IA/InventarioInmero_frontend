@@ -14,7 +14,8 @@
     "viewPermissions": "Ver permisos",
     "remove": "Quitar",
     "addAssignment": "Agregar asignación",
-    "search": "Buscar"
+    "search": "Buscar",
+    "retry": "Reintentar"
   },
   "labels": {
     "status": "Estado",
