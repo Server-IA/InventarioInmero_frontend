@@ -1,10 +1,24 @@
+/*=============================================================================
+Nombre del archivo : Rkardex.jsx
+Descripcion        : Reportes del modulo Kardex y vista previa PDF.
+===============================================================================
+CONTROL DE CAMBIOS
++------------+---------+----------------------+----------------------------------------------+
+|   Fecha    | Version |      Autor           | Descripcion del cambio                       |
++------------+---------+----------------------+----------------------------------------------+
+| 2026-09-11 | 0.4.0   | Cesar Medina         | Aplica estilo visual consistente a preview.  |
+| 2026-09-11 | 0.4.0   | Cesar Medina         | Adapta vista de reportes al modal embebido.  |
++------------+---------+----------------------+----------------------------------------------+
+=============================================================================*/
 import React, { useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import {
   Box, Typography, TextField, Button, Stack, Grid,
   FormControl, InputLabel, Select, MenuItem,
-  Dialog, DialogTitle, DialogContent, IconButton,
+  Dialog, DialogTitle, DialogContent, DialogActions, IconButton,
   Table, TableBody, TableCell, TableHead, TableRow, TableContainer, Paper
 } from "@mui/material";
+import { alpha, useTheme } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import axios from "../axiosConfig";
 import MessageSnackBar from "../MessageSnackBar";
@@ -12,7 +26,97 @@ import MessageSnackBar from "../MessageSnackBar";
 import useUbicacionFilters from "../useUbicacionFilters";
 import UbicacionProductoVencimientoFilters from "../UbicacionProductoVencimientoFilters.jsx";
 
-export default function RE_kardexPedido() {
+const getDialogUi = (theme) => {
+  const isDark = theme.palette.mode === "dark";
+  const darkGreen = isDark ? "#E7F6F7" : "#173f39";
+  const green = isDark ? "#2b6b60" : "#173f39";
+  const surface = isDark ? "#10211f" : theme.palette.common.white;
+  const sectionSurface = isDark ? "#142b28" : "#f8fbfa";
+  const subtleBorder = alpha(green, 0.14);
+  const softShadow = `0 14px 36px ${alpha(darkGreen, isDark ? 0.18 : 0.08)}`;
+  const buttonTransition = theme.transitions.create(
+    ["transform", "background-color", "border-color", "box-shadow"],
+    { duration: theme.transitions.duration.shorter }
+  );
+
+  return {
+    darkGreen,
+    paperSx: {
+      borderRadius: 3,
+      overflow: "hidden",
+      backgroundColor: surface,
+      boxShadow: softShadow,
+    },
+    titleSx: {
+      px: { xs: 2.25, sm: 3 },
+      py: 2.15,
+      backgroundColor: surface,
+      borderTop: `3px solid ${darkGreen}`,
+      borderBottom: `1px solid ${subtleBorder}`,
+      fontSize: "1.12rem",
+      fontWeight: 700,
+      color: darkGreen,
+    },
+    contentSx: {
+      px: { xs: 2.25, sm: 3 },
+      pt: 3,
+      pb: 2.5,
+      backgroundColor: surface,
+    },
+    actionsSx: {
+      px: { xs: 2.25, sm: 3 },
+      py: 2,
+      backgroundColor: surface,
+      borderTop: `1px solid ${subtleBorder}`,
+      justifyContent: "space-between",
+      gap: 1.25,
+      flexWrap: "wrap",
+    },
+    bodyCardSx: {
+      p: { xs: 1.5, sm: 2 },
+      borderRadius: 2.25,
+      border: `1px solid ${subtleBorder}`,
+      backgroundColor: sectionSurface,
+      boxShadow: `0 4px 14px ${alpha(darkGreen, isDark ? 0.14 : 0.05)}`,
+    },
+    secondaryButtonSx: {
+      textTransform: "none",
+      fontWeight: 700,
+      borderRadius: 1.75,
+      color: darkGreen,
+      borderColor: alpha(darkGreen, 0.18),
+      transition: buttonTransition,
+      "&:hover": {
+        borderColor: alpha(darkGreen, 0.26),
+        backgroundColor: alpha(darkGreen, 0.06),
+        boxShadow: `0 8px 20px ${alpha(darkGreen, isDark ? 0.14 : 0.08)}`,
+        transform: "translateY(-1px)",
+      },
+      "&:active": {
+        transform: "translateY(1px) scale(0.99)",
+        boxShadow: `0 3px 10px ${alpha(darkGreen, isDark ? 0.16 : 0.09)}`,
+      },
+    },
+    subtleButtonSx: {
+      textTransform: "none",
+      fontWeight: 700,
+      borderRadius: 1.75,
+      color: darkGreen,
+      transition: buttonTransition,
+      "&:hover": {
+        backgroundColor: alpha(darkGreen, 0.06),
+        transform: "translateY(-1px)",
+      },
+      "&:active": {
+        transform: "translateY(1px) scale(0.99)",
+      },
+    },
+  };
+};
+
+export default function RE_kardexPedido({ embeddedInDialog = false }) {
+  const theme = useTheme();
+  const dialogUi = getDialogUi(theme);
   const empresaId = localStorage.getItem("empresaId");
   const token = localStorage.getItem("token");
   const headers = { headers: { Authorization: `Bearer ${token}` } };
@@ -93,7 +197,6 @@ export default function RE_kardexPedido() {
           text: "No fue posible cargar los catálogos.",
         })
       );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
@@ -290,7 +393,9 @@ export default function RE_kardexPedido() {
         const t = await err.response.data.text();
         return t?.slice(0, 400) || err.message;
       }
-    } catch { }
+    } catch {
+      // noop
+    }
     return err?.message || "Error desconocido";
   };
 
@@ -317,10 +422,12 @@ export default function RE_kardexPedido() {
   };
 
   return (
-    <Box sx={{ p: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Reporte Kardex
-      </Typography>
+    <Box sx={{ p: embeddedInDialog ? { xs: 0.5, sm: 1 } : 4 }}>
+      {!embeddedInDialog ? (
+        <Typography variant="h4" gutterBottom>
+          Reporte Kardex
+        </Typography>
+      ) : null}
 
       {/* Filtros principales (producto, categoría, fechas) */}
       <Grid container spacing={2} mb={2}>
@@ -512,30 +619,50 @@ export default function RE_kardexPedido() {
         onClose={() => setPreviewOpen(false)}
         fullWidth
         maxWidth="lg"
+        PaperProps={{ sx: dialogUi.paperSx }}
       >
-        <DialogTitle>
+        <DialogTitle sx={dialogUi.titleSx}>
           Vista previa del Reporte
           <IconButton
             onClick={() => setPreviewOpen(false)}
-            sx={{ position: "absolute", right: 8, top: 8 }}
+            sx={{
+              ...dialogUi.subtleButtonSx,
+              position: "absolute",
+              right: 16,
+              top: 12,
+              p: 0.75,
+              minWidth: "auto",
+            }}
           >
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent dividers>
-          {previewUrl && (
-            <iframe
-              src={previewUrl}
-              width="100%"
-              height="600"
-              title="PDF"
-              style={{ border: "none" }}
-            />
-          )}
+        <DialogContent sx={dialogUi.contentSx}>
+          <Box sx={{ ...dialogUi.bodyCardSx, p: 1.5 }}>
+            {previewUrl && (
+              <iframe
+                src={previewUrl}
+                width="100%"
+                height="600"
+                title="PDF"
+                style={{ border: "none", borderRadius: "12px", backgroundColor: "#fff" }}
+              />
+            )}
+          </Box>
         </DialogContent>
+        <DialogActions sx={dialogUi.actionsSx}>
+          <Box sx={{ flex: 1 }} />
+          <Button variant="outlined" onClick={() => setPreviewOpen(false)} sx={dialogUi.secondaryButtonSx}>
+            Cerrar
+          </Button>
+        </DialogActions>
       </Dialog>
 
       <MessageSnackBar message={message} setMessage={setMessage} />
     </Box>
   );
 }
+
+RE_kardexPedido.propTypes = {
+  embeddedInDialog: PropTypes.bool,
+};

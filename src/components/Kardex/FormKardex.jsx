@@ -8,6 +8,7 @@ CONTROL DE CAMBIOS
 +------------+---------+----------------------+-----------------------------+
 | 2026-05-08 | 0.4.0   | Jeisson Sanchez      | Encabezado estandar agregado.|
 | 2026-09-09 | 0.4.0   | Cesar Medina         | Preserva encabezado y detalle entre pasos. |
+| 2026-09-11 | 0.4.0   | Cesar Medina         | Aplica estilo visual consistente a modales. |
 +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -30,6 +31,7 @@ import {
 } from "@mui/material";
 import PropTypes from "prop-types";
 import SearchIcon from "@mui/icons-material/Search";
+import { alpha, useTheme } from "@mui/material/styles";
 import axios from "../axiosConfig";
 import * as Yup from "yup";
 import GridArticuloKardex from "./GridArticuloKardex";
@@ -158,6 +160,108 @@ const isPresentacionDevolutiva = (p) =>
       p?.producto?.esDevolutivo
   );
 
+const getDialogUi = (theme) => {
+  const isDark = theme.palette.mode === "dark";
+  const darkGreen = isDark ? "#E7F6F7" : "#173f39";
+  const green = isDark ? "#2b6b60" : "#173f39";
+  const surface = isDark ? "#10211f" : theme.palette.common.white;
+  const sectionSurface = isDark ? "#142b28" : "#f8fbfa";
+  const subtleBorder = alpha(green, 0.14);
+  const softShadow = `0 14px 36px ${alpha(darkGreen, isDark ? 0.18 : 0.08)}`;
+  const buttonTransition = theme.transitions.create(
+    ["transform", "background-color", "border-color", "box-shadow"],
+    { duration: theme.transitions.duration.shorter }
+  );
+
+  return {
+    paperSx: {
+      borderRadius: 3,
+      overflow: "hidden",
+      backgroundColor: surface,
+      boxShadow: softShadow,
+    },
+    titleSx: {
+      px: { xs: 2.25, sm: 3 },
+      py: 2.15,
+      backgroundColor: surface,
+      borderTop: `3px solid ${darkGreen}`,
+      borderBottom: `1px solid ${subtleBorder}`,
+      fontSize: "1.12rem",
+      fontWeight: 700,
+      color: darkGreen,
+    },
+    contentSx: {
+      px: { xs: 2.25, sm: 3 },
+      pt: 3,
+      pb: 2.5,
+      backgroundColor: surface,
+    },
+    actionsSx: {
+      px: { xs: 2.25, sm: 3 },
+      py: 2,
+      backgroundColor: surface,
+      borderTop: `1px solid ${subtleBorder}`,
+      justifyContent: "space-between",
+      gap: 1.25,
+      flexWrap: "wrap",
+    },
+    bodyCardSx: {
+      p: { xs: 1.5, sm: 2 },
+      borderRadius: 2.25,
+      border: `1px solid ${subtleBorder}`,
+      backgroundColor: sectionSurface,
+      boxShadow: `0 4px 14px ${alpha(darkGreen, isDark ? 0.14 : 0.05)}`,
+    },
+    secondaryButtonSx: {
+      textTransform: "none",
+      fontWeight: 700,
+      borderRadius: 1.75,
+      color: darkGreen,
+      borderColor: alpha(darkGreen, 0.18),
+      transition: buttonTransition,
+      "&:hover": {
+        borderColor: alpha(darkGreen, 0.26),
+        backgroundColor: alpha(darkGreen, 0.06),
+        boxShadow: `0 8px 20px ${alpha(darkGreen, isDark ? 0.14 : 0.08)}`,
+        transform: "translateY(-1px)",
+      },
+      "&:active": {
+        transform: "translateY(1px) scale(0.99)",
+        boxShadow: `0 3px 10px ${alpha(darkGreen, isDark ? 0.16 : 0.09)}`,
+      },
+    },
+    subtleButtonSx: {
+      textTransform: "none",
+      fontWeight: 700,
+      borderRadius: 1.75,
+      color: darkGreen,
+      transition: buttonTransition,
+      "&:hover": {
+        backgroundColor: alpha(darkGreen, 0.06),
+        transform: "translateY(-1px)",
+      },
+      "&:active": {
+        transform: "translateY(1px) scale(0.99)",
+      },
+    },
+    primaryButtonSx: {
+      textTransform: "none",
+      fontWeight: 700,
+      borderRadius: 1.75,
+      boxShadow: `0 10px 22px ${alpha(green, isDark ? 0.26 : 0.16)}`,
+      transition: buttonTransition,
+      "&:hover": {
+        boxShadow: `0 14px 28px ${alpha(green, isDark ? 0.32 : 0.22)}`,
+        transform: "translateY(-1px)",
+      },
+      "&:active": {
+        transform: "translateY(1px) scale(0.99)",
+        boxShadow: `0 5px 12px ${alpha(green, isDark ? 0.24 : 0.14)}`,
+      },
+    },
+  };
+};
+
 export default function FormKardex({
   open,
   setOpen,
@@ -168,6 +272,8 @@ export default function FormKardex({
   setMessage,
   setSelectedRow,
 }) {
+  const theme = useTheme();
+  const dialogUi = getDialogUi(theme);
   const [formData, setFormData] = useState({
     id: undefined,
     fechaHora: "",
@@ -1328,11 +1434,20 @@ export default function FormKardex({
 
   return (
     <Box>
-      <Dialog open={open && !startInArticles} onClose={() => setOpen(false)} fullWidth maxWidth="md">
-        <DialogTitle>{formMode === "edit" ? "Editar Kardex" : "Crear Kardex"}</DialogTitle>
+      <Dialog
+        open={open && !startInArticles}
+        onClose={() => setOpen(false)}
+        fullWidth
+        maxWidth="md"
+        PaperProps={{ sx: dialogUi.paperSx }}
+      >
+        <DialogTitle sx={dialogUi.titleSx}>
+          {formMode === "edit" ? "Editar Kardex" : "Crear Kardex"}
+        </DialogTitle>
 
-        <DialogContent sx={{ pt: 3 }}>
-          <Grid container spacing={2} sx={{ mt: 0.5 }}>
+        <DialogContent sx={dialogUi.contentSx}>
+          <Box sx={dialogUi.bodyCardSx}>
+            <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid item xs={12} sm={6}>
               <TextField
                 label="Fecha/Hora"
@@ -1513,12 +1628,18 @@ export default function FormKardex({
                 minRows={3}
               />
             </Grid>
-          </Grid>
+            </Grid>
+          </Box>
         </DialogContent>
 
-        <DialogActions>
-          <Button onClick={() => setOpen(false)}>Cancelar</Button>
-          <Button onClick={handleNext}>Siguiente</Button>
+        <DialogActions sx={dialogUi.actionsSx}>
+          <Button onClick={() => setOpen(false)} variant="outlined" sx={dialogUi.secondaryButtonSx}>
+            Cancelar
+          </Button>
+          <Box sx={{ flex: 1 }} />
+          <Button onClick={handleNext} variant="contained" sx={dialogUi.primaryButtonSx}>
+            Siguiente
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -1530,59 +1651,77 @@ export default function FormKardex({
         }}
         fullWidth
         maxWidth="lg"
+        PaperProps={{ sx: dialogUi.paperSx }}
       >
-        <DialogTitle>Articulos del Kardex</DialogTitle>
-        <DialogContent sx={{ pt: 1 }}>
-          <GridActionBar
-            onAdd={handleOpenCreateArticle}
-            onUpdate={handleOpenEditArticle}
-            onDelete={handleDeleteArticle}
-            canUpdate={Boolean(articleSelectedRow)}
-            canDelete={Boolean(articleSelectedRow)}
-            labels={{ add: "Agregar", update: "Actualizar", delete: "Anular" }}
-            onFilters={() => setArticleFiltersOpen(true)}
-            onClearFilters={() => setArticleFilters(DEFAULT_ARTICLE_FILTERS)}
-            hasActiveFilters={hasActiveArticleFilters}
-          />
+        <DialogTitle sx={dialogUi.titleSx}>Articulos del Kardex</DialogTitle>
+        <DialogContent sx={{ ...dialogUi.contentSx, pt: 2.5 }}>
+          <Box sx={dialogUi.bodyCardSx}>
+            <GridActionBar
+              onAdd={handleOpenCreateArticle}
+              onUpdate={handleOpenEditArticle}
+              onDelete={handleDeleteArticle}
+              canUpdate={Boolean(articleSelectedRow)}
+              canDelete={Boolean(articleSelectedRow)}
+              labels={{ add: "Agregar", update: "Actualizar", delete: "Anular" }}
+              onFilters={() => setArticleFiltersOpen(true)}
+              onClearFilters={() => setArticleFilters(DEFAULT_ARTICLE_FILTERS)}
+              hasActiveFilters={hasActiveArticleFilters}
+            />
 
-          <GridArticuloKardex
-            items={filteredDraftItems}
-            presentaciones={presentaciones}
-            productos={productos}
-            selectedRow={articleSelectedRow}
-            setSelectedRow={setArticleSelectedRow}
-          />
+            <GridArticuloKardex
+              items={filteredDraftItems}
+              presentaciones={presentaciones}
+              productos={productos}
+              selectedRow={articleSelectedRow}
+              setSelectedRow={setArticleSelectedRow}
+            />
+          </Box>
         </DialogContent>
 
-        <DialogActions>
-          {!startInArticles && (
+        <DialogActions sx={dialogUi.actionsSx}>
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+            {!startInArticles && (
+              <Button
+                onClick={() => {
+                  setArticleModalOpen(false);
+                  setOpen(true);
+                }}
+                variant="outlined"
+                sx={dialogUi.secondaryButtonSx}
+              >
+                Volver
+              </Button>
+            )}
             <Button
               onClick={() => {
                 setArticleModalOpen(false);
-                setOpen(true);
+                if (startInArticles) setOpen(false);
               }}
+              variant="outlined"
+              sx={dialogUi.secondaryButtonSx}
             >
-              Volver
+              Cancelar
             </Button>
-          )}
-          <Button
-            onClick={() => {
-              setArticleModalOpen(false);
-              if (startInArticles) setOpen(false);
-            }}
-          >
-            Cancelar
-          </Button>
-          <Button variant="contained" onClick={handleSaveKardex} disabled={savingKardex}>
+          </Box>
+          <Button variant="contained" onClick={handleSaveKardex} disabled={savingKardex} sx={dialogUi.primaryButtonSx}>
             {savingKardex ? "Guardando..." : "Guardar Kardex"}
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={articleFormOpen} onClose={() => setArticleFormOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>{articleFormMode === "edit" ? "Actualizar Articulo" : "Agregar Articulo"}</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 0.5 }}>
+      <Dialog
+        open={articleFormOpen}
+        onClose={() => setArticleFormOpen(false)}
+        fullWidth
+        maxWidth="sm"
+        PaperProps={{ sx: dialogUi.paperSx }}
+      >
+        <DialogTitle sx={dialogUi.titleSx}>
+          {articleFormMode === "edit" ? "Actualizar Articulo" : "Agregar Articulo"}
+        </DialogTitle>
+        <DialogContent sx={dialogUi.contentSx}>
+          <Box sx={dialogUi.bodyCardSx}>
+            <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -1701,19 +1840,31 @@ export default function FormKardex({
               </Grid>
             )}
 
-          </Grid>
+            </Grid>
+          </Box>
         </DialogContent>
 
-        <DialogActions>
-          <Button onClick={() => setArticleFormOpen(false)}>Cancelar</Button>
-          <Button onClick={handleSaveArticleDraft}>Guardar</Button>
+        <DialogActions sx={dialogUi.actionsSx}>
+          <Button onClick={() => setArticleFormOpen(false)} variant="outlined" sx={dialogUi.secondaryButtonSx}>
+            Cancelar
+          </Button>
+          <Box sx={{ flex: 1 }} />
+          <Button onClick={handleSaveArticleDraft} variant="contained" sx={dialogUi.primaryButtonSx}>
+            Guardar
+          </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={articleFiltersOpen} onClose={() => setArticleFiltersOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Filtros de Artículos</DialogTitle>
-        <DialogContent sx={{ pt: 3.5 }}>
-          <Box sx={{ display: "grid", gridTemplateColumns: "1fr", gap: 2, mt: 1 }}>
+      <Dialog
+        open={articleFiltersOpen}
+        onClose={() => setArticleFiltersOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: dialogUi.paperSx }}
+      >
+        <DialogTitle sx={dialogUi.titleSx}>Filtros de Artículos</DialogTitle>
+        <DialogContent sx={dialogUi.contentSx}>
+          <Box sx={{ ...dialogUi.bodyCardSx, display: "grid", gridTemplateColumns: "1fr", gap: 2, mt: 1 }}>
             <FormControl size="small" fullWidth>
               <InputLabel id="kdx-art-filter-producto-label">Producto</InputLabel>
               <Select
@@ -1732,17 +1883,27 @@ export default function FormKardex({
             </FormControl>
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setArticleFilters(DEFAULT_ARTICLE_FILTERS)}>Limpiar</Button>
-          <Button variant="contained" onClick={() => setArticleFiltersOpen(false)}>
+        <DialogActions sx={dialogUi.actionsSx}>
+          <Button onClick={() => setArticleFilters(DEFAULT_ARTICLE_FILTERS)} sx={dialogUi.subtleButtonSx}>
+            Limpiar
+          </Button>
+          <Box sx={{ flex: 1 }} />
+          <Button variant="contained" onClick={() => setArticleFiltersOpen(false)} sx={dialogUi.primaryButtonSx}>
             Aplicar
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={lookupOpen} onClose={() => setLookupOpen(false)} fullWidth maxWidth="md">
-        <DialogTitle>{lookupTitle}</DialogTitle>
-        <DialogContent sx={{ pt: 1 }}>
+      <Dialog
+        open={lookupOpen}
+        onClose={() => setLookupOpen(false)}
+        fullWidth
+        maxWidth="md"
+        PaperProps={{ sx: dialogUi.paperSx }}
+      >
+        <DialogTitle sx={dialogUi.titleSx}>{lookupTitle}</DialogTitle>
+        <DialogContent sx={{ ...dialogUi.contentSx, pt: 2.25 }}>
+          <Box sx={dialogUi.bodyCardSx}>
           <TextField
             fullWidth
             placeholder="Buscar..."
@@ -1757,10 +1918,19 @@ export default function FormKardex({
             setSelectedRow={setLookupSelectedRow}
             pageSizeOptions={[5, 10, 20]}
           />
+          </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setLookupOpen(false)}>Cancelar</Button>
-          <Button variant="contained" disabled={!lookupSelectedRow} onClick={applyLookupSelection}>
+        <DialogActions sx={dialogUi.actionsSx}>
+          <Button onClick={() => setLookupOpen(false)} variant="outlined" sx={dialogUi.secondaryButtonSx}>
+            Cancelar
+          </Button>
+          <Box sx={{ flex: 1 }} />
+          <Button
+            variant="contained"
+            disabled={!lookupSelectedRow}
+            onClick={applyLookupSelection}
+            sx={dialogUi.primaryButtonSx}
+          >
             Seleccionar
           </Button>
         </DialogActions>
