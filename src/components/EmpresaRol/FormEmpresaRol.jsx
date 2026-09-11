@@ -7,6 +7,7 @@ CONTROL DE CAMBIOS
 |   Fecha    | Versión |      Autor           | Descripción del cambio                        |
 +------------+---------+----------------------+-----------------------------------------------+
 | 2026-05-22 | 0.4.0   | Cesar Medina         | Se corrige referencia de tema en el modal.    |
+| 2026-08-25 | 0.4.0   | Jeisson Sanchez      | [Issue #278] Enviar empresa objetivo al quitar permiso. |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 import React, { useEffect, useState } from "react";
@@ -286,7 +287,10 @@ const agruparPorSubsistema = (modulosArray) => {
     try {
       await axios.delete(
         `/v1/empresa-rol-permisos/rol/${rolId}/permisos/quitar`,
-        { data: { permisosId: [permisoId] } }
+        {
+          data: { permisosId: [permisoId] },
+          ...(isSystemAdmin ? { params: { empresaId: getTargetEmpresaId() } } : {}),
+        }
       );
 
       setPermisosSeleccionados((prev) =>
@@ -673,3 +677,20 @@ const subsistemasAgrupados = agruparPorSubsistema(modulos);
     </Dialog>
   );
 }
+
+FormEmpresaRol.propTypes = {
+  open: PropTypes.bool.isRequired,
+  setOpen: PropTypes.func.isRequired,
+  selectedRow: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    empresaId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    rolId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    rolNombre: PropTypes.string,
+  }),
+  setSelectedRow: PropTypes.func.isRequired,
+  setMessage: PropTypes.func.isRequired,
+  reloadData: PropTypes.func.isRequired,
+  roles: PropTypes.array,
+  empresaId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  isSystemAdmin: PropTypes.bool,
+};
