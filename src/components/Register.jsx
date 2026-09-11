@@ -7,6 +7,7 @@
  |   Fecha    | Versión |      Autor           | Descripción del cambio      |
  +------------+---------+----------------------+-----------------------------+
  | 2026-05-08 | 0.4.0   | Cesar Medina         | Creación del archivo.       |
+ | 2026-09-08 | 0.4.0   | Jeisson Sanchez      | [Issue #288] Contraste en modo oscuro y navegación a Login. |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 /**
@@ -15,6 +16,7 @@
  * envía el idioma activo al backend para mensajes y notificaciones.
  */
 import React, { useState } from "react";
+import PropTypes from "prop-types";
 import {
   Box,
   TextField,
@@ -27,12 +29,12 @@ import {
 } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { Link as RouterLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
 import { resolveAppLanguage } from "../i18n.js";
+import Login from "./Login";
 
-export default function Register() {
+export default function Register(props) {
   const { t } = useTranslation();
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
@@ -51,6 +53,7 @@ export default function Register() {
                              : alpha(theme.palette.primary.main, 0.35);
 
   const textSecondary = theme.palette.text.secondary;
+  const linkColor = isDark ? theme.palette.text.primary : theme.palette.primary.main;
 
   // Fix para autofill en dark (que no ponga azul)
   const autofillStyles = {
@@ -246,12 +249,21 @@ export default function Register() {
         <Typography variant="body2" align="center" sx={{ mt: 1, color: textSecondary }}>
           {t("auth.register.alreadyHaveAccount")}{" "}
           <Link
-            component={RouterLink}
-            to="/login"
+            component="button"
+            type="button"
+            onClick={() =>
+              props.setCurrentModule?.(
+                <Login
+                  setCurrentModule={props.setCurrentModule}
+                  setIsAuthenticated={props.setIsAuthenticated}
+                />
+              )
+            }
             sx={{
-              color: theme.palette.primary.main,
+              color: linkColor,
               fontWeight: 700,
               textDecoration: "none",
+              verticalAlign: "baseline",
             }}
           >
             {t("auth.register.loginHere")}
@@ -261,3 +273,8 @@ export default function Register() {
     </Box>
   );
 }
+
+Register.propTypes = {
+  setCurrentModule: PropTypes.func,
+  setIsAuthenticated: PropTypes.func,
+};

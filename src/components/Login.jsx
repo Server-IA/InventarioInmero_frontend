@@ -7,6 +7,7 @@
  |   Fecha    | Versión |      Autor           | Descripción del cambio      |
  +------------+---------+----------------------+-----------------------------+
  | 2026-05-08 | 0.4.0   | Cesar Medina         | Creación del archivo.       |
+ | 2026-09-08 | 0.4.0   | Jeisson Sanchez      | [Issue #288] Contraste en modo oscuro y navegación a Registro. |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 /**
@@ -23,13 +24,14 @@ import {
 import { useTheme, alpha } from "@mui/material/styles";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import LoginIcon from "@mui/icons-material/Login";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import PropTypes from "prop-types";
 import axios from "axios";
 import { resolveAppLanguage } from "../i18n.js";
 
 import ForgotPassword from "../ForgotPassword";
+import Register from "./Register";
 
 // === decodeJwt robusto (base64url + normalización numérica)
 const decodeJwt = (jwt = "") => {
@@ -69,6 +71,7 @@ export default function Login(props) {
   const borderWrap = isDark ? alpha(theme.palette.primary.light, 0.45) : alpha(theme.palette.primary.main, 0.35);
   const titleColor = theme.palette.text.primary;
   const textSecondary = theme.palette.text.secondary;
+  const linkColor = isDark ? theme.palette.text.primary : theme.palette.primary.main;
 
   const autofillStyles = {
     WebkitBoxShadow: `0 0 0 1000px ${inputBg} inset`,
@@ -98,7 +101,9 @@ export default function Login(props) {
       localStorage.removeItem("rolesByCompany");
       localStorage.removeItem("activeModule");
       localStorage.removeItem("nombrePersona");
-    } catch {}
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const persistAuth = (
@@ -432,7 +437,7 @@ switch (estado) {
                 <ForgotPassword setCurrentModule={props.setCurrentModule} />
               )
             }
-            sx={{ color: theme.palette.primary.main, textTransform: "none" }}
+            sx={{ color: linkColor, textTransform: "none", fontWeight: 600 }}
           >
             {t("auth.login.forgotPassword")}
           </Button>
@@ -441,9 +446,22 @@ switch (estado) {
        <Typography variant="body2" align="center" sx={{ mt: 2, color: textSecondary }}>
           {t("auth.links.noAccount")}{" "}
           <Link
-            component={RouterLink}
-            to="/register"
-            sx={{ color: theme.palette.primary.main, textDecoration: "none", fontWeight: 700 }}
+            component="button"
+            type="button"
+            onClick={() =>
+              props.setCurrentModule?.(
+                <Register
+                  setCurrentModule={props.setCurrentModule}
+                  setIsAuthenticated={props.setIsAuthenticated}
+                />
+              )
+            }
+            sx={{
+              color: linkColor,
+              textDecoration: "none",
+              fontWeight: 700,
+              verticalAlign: "baseline",
+            }}
           >
             {t("auth.links.registerHere")}
           </Link>
