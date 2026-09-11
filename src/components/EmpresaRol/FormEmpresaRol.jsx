@@ -8,6 +8,7 @@ CONTROL DE CAMBIOS
 +------------+---------+----------------------+-----------------------------------------------+
 | 2026-05-22 | 0.4.0   | Cesar Medina         | Se corrige referencia de tema en el modal.    |
 | 2026-08-25 | 0.4.0   | Jeisson Sanchez      | [Issue #277] Enviar empresa elegida al crear. |
+| 2026-08-25 | 0.4.0   | Jeisson Sanchez      | [Issue #278] Enviar empresa objetivo al quitar permiso. |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 import React, { useEffect, useState } from "react";
@@ -287,7 +288,10 @@ const agruparPorSubsistema = (modulosArray) => {
     try {
       await axios.delete(
         `/v1/empresa-rol-permisos/rol/${rolId}/permisos/quitar`,
-        { data: { permisosId: [permisoId] } }
+        {
+          data: { permisosId: [permisoId] },
+          ...(isSystemAdmin ? { params: { empresaId: getTargetEmpresaId() } } : {}),
+        }
       );
 
       setPermisosSeleccionados((prev) =>
