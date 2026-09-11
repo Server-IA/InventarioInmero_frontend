@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import {
   Dialog,
   DialogTitle,
@@ -22,13 +23,15 @@ export default function ModalVerPermisos({
   onClose,
   permisos = [],
   rolNombre = "",
+  permisosError = false,
+  onRetry = null,
 }) {
   const { t } = useTranslation();
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
 
   // Agrupar por módulo usando autoridad
-  const permisosPorModulo = permisos.reduce((acc, permiso) => {
+  const permisosPorModulo = (Array.isArray(permisos) ? permisos : []).reduce((acc, permiso) => {
     let moduloNombre = t("common.labels.general");
 
     if (permiso.autoridad) {
@@ -65,7 +68,25 @@ export default function ModalVerPermisos({
           backgroundColor: theme.palette.background.default,
         }}
       >
-        {permisos.length === 0 ? (
+        {permisosError ? (
+          <Box sx={{ py: 3, textAlign: "center" }}>
+            <Typography color="error" sx={{ mb: 2 }}>
+              {t("empresaRol.permissions.rolePermissionsError", "No se pudieron cargar los permisos debido a un error de conexión o del servidor.")}
+            </Typography>
+            {onRetry && (
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => {
+                  onClose();
+                  onRetry();
+                }}
+              >
+                {t("common.actions.retry", "Reintentar")}
+              </Button>
+            )}
+          </Box>
+        ) : permisos.length === 0 ? (
           <Typography color="text.secondary">
             {t("empresaRol.permissions.roleHasNoPermissions")}
           </Typography>
@@ -145,3 +166,12 @@ export default function ModalVerPermisos({
     </Dialog>
   );
 }
+
+ModalVerPermisos.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  permisos: PropTypes.array,
+  rolNombre: PropTypes.string,
+  permisosError: PropTypes.bool,
+  onRetry: PropTypes.func,
+};

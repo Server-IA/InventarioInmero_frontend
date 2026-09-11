@@ -21,10 +21,14 @@
     "roleRequired": "Debe seleccionar un rol",
     "companyRequired": "Debe seleccionar una empresa",
     "saveSuccess": "Permisos actualizados correctamente",
-    "saveError": "Error al guardar permisos"
+    "saveError": "Error al guardar permisos",
+    "permissionsQueryError": "Error al consultar los permisos de uno o más roles. Puede reintentar la consulta.",
+    "rolesLoadError": "Error al cargar roles de empresa."
   },
   "permissions": {
     "withoutPermissions": "Sin permisos",
+    "errorLoading": "Error al cargar permisos",
+    "rolePermissionsError": "No se pudieron cargar los permisos debido a un error de conexión o del servidor.",
     "withPermissionsModules": "Este rol tiene permisos en los siguientes módulos",
     "withoutAssignedPermissions": "Módulos sin permisos asignados",
     "withoutAssignedPermissionsHelp": "Estos módulos no tienen permisos. Puedes asignarlos si lo necesitas.",
