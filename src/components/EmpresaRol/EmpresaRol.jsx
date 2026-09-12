@@ -1,3 +1,16 @@
+/*=============================================================================
+ Nombre del archivo : EmpresaRol.jsx
+ Descripcion        : Gestión de asignaciones de Roles a Empresas (HU-036 / Issue #284).
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |   Fecha    | Versión |      Autor           | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-05-22 | 0.4.0   | Cesar Medina         | Creación del archivo.       |
+ | 2026-09-03 | 0.4.0   | Jeisson Sanchez      | [Issue #284] Modal de filtros de roles. |
+ | 2026-09-11 | 0.4.0   | Jeisson Sanchez      | [HU-036.6] Filtro por nombre de rol como campo de texto libre. |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Dialog,
@@ -11,6 +24,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  TextField,
 } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { useTheme, alpha } from "@mui/material/styles";
@@ -72,7 +86,7 @@ export default function EmpresaRol() {
   const [empresas, setEmpresas] = useState([]);
   const [filters, setFilters] = useState({
     empresaId: "",
-    rolId: "",
+    nombre: "",
     estadoId: "",
   });
   const [tempFilters, setTempFilters] = useState(filters);
@@ -192,52 +206,27 @@ export default function EmpresaRol() {
   };
 
   const handleClearFilters = () => {
-    const emptyFilters = { empresaId: "", rolId: "", estadoId: "" };
+    const emptyFilters = { empresaId: "", nombre: "", estadoId: "" };
     setTempFilters(emptyFilters);
     setFilters(emptyFilters);
     setFilterModalOpen(false);
   };
 
-  const hasActiveFilters = Boolean(filters.empresaId || filters.rolId || filters.estadoId);
-
-  // Determinar la empresa efectiva seleccionada en el modal (o la empresa de sesión si no es admin sistema)
-  const effectiveFilterEmpresaId = isSystemAdmin ? tempFilters.empresaId : empresaId;
-
-  // Opciones de roles disponibles en el modal según empresa seleccionada (híbrido/cascada)
-  const availableFilterRoles = useMemo(() => {
-    if (effectiveFilterEmpresaId) {
-      // Filtrar a partir de las filas ya cargadas para esa empresa
-      const rowsForCompany = rows.filter(
-        (r) => String(r.empresaId ?? empresaId) === String(effectiveFilterEmpresaId)
-      );
-      const uniqueRoleNames = Array.from(
-        new Set(rowsForCompany.map((r) => r.rolNombre).filter(Boolean))
-      );
-      return uniqueRoleNames.map((roleName) => {
-        const found = roles.find((r) => r.name === roleName);
-        return {
-          id: found ? String(found.id) : roleName,
-          name: roleName,
-        };
-      });
-    }
-
-    // Sin empresa seleccionada (Admin Sistema viendo todo): catálogo global completo
-    return roles.map((r) => ({
-      id: String(r.id),
-      name: r.name || r.nombre,
-    }));
-  }, [effectiveFilterEmpresaId, rows, empresaId, roles]);
+  const hasActiveFilters = Boolean(
+    filters.empresaId ||
+    (filters.nombre && filters.nombre.trim() !== "") ||
+    filters.estadoId
+  );
 
   const filteredRows = useMemo(() => {
     return rows.filter((row) => {
       if (filters.empresaId && String(row.empresaId ?? empresaId) !== String(filters.empresaId)) {
         return false;
       }
-      if (filters.rolId) {
-        const selectedRol = roles.find((r) => String(r.id) === String(filters.rolId));
-        const targetName = selectedRol ? selectedRol.name : filters.rolId;
-        if (row.rolNombre !== targetName) {
+      if (filters.nombre && filters.nombre.trim() !== "") {
+        const search = filters.nombre.trim().toLowerCase();
+        const rowNombre = (row.rolNombre || "").toLowerCase();
+        if (!rowNombre.includes(search)) {
           return false;
         }
       }
@@ -253,7 +242,7 @@ export default function EmpresaRol() {
       }
       return true;
     });
-  }, [rows, filters, roles, empresaId]);
+  }, [rows, filters, empresaId]);
 
   const handleViewPermisos = () => {
     if (!selectedRow?.id) {
@@ -492,15 +481,10 @@ export default function EmpresaRol() {
                   value={tempFilters.empresaId}
                   label={t("common.labels.company", "Empresa")}
                   onChange={(e) => {
-                    const newEmpresaId = e.target.value;
-                    setTempFilters((prev) => {
-                      // Al cambiar empresa, resetear rolId si ya no existe en la nueva empresa
-                      return {
-                        ...prev,
-                        empresaId: newEmpresaId,
-                        rolId: "",
-                      };
-                    });
+                    setTempFilters((prev) => ({
+                      ...prev,
+                      empresaId: e.target.value,
+                    }));
                   }}
                 >
                   <MenuItem value="">
@@ -515,28 +499,17 @@ export default function EmpresaRol() {
               </FormControl>
             )}
 
-            <FormControl fullWidth size="small">
-              <InputLabel id="rol-filter-label">
-                {t("empresaRol.columns.role", "Rol")}
-              </InputLabel>
-              <Select
-                labelId="rol-filter-label"
-                value={tempFilters.rolId}
-                label={t("empresaRol.columns.role", "Rol")}
-                onChange={(e) =>
-                  setTempFilters((prev) => ({ ...prev, rolId: e.target.value }))
-                }
-              >
-                <MenuItem value="">
-                  <em>{t("common.labels.all", "Todos")}</em>
-                </MenuItem>
-                {availableFilterRoles.map((r) => (
-                  <MenuItem key={r.id} value={r.id}>
-                    {r.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <TextField
+              fullWidth
+              size="small"
+              id="nombre-filter-input"
+              label={t("empresaRol.columns.role", "Nombre del rol")}
+              placeholder="Ej: Administrador, Técnico..."
+              value={tempFilters.nombre}
+              onChange={(e) =>
+                setTempFilters((prev) => ({ ...prev, nombre: e.target.value }))
+              }
+            />
 
             <FormControl fullWidth size="small">
               <InputLabel id="estado-filter-label">
