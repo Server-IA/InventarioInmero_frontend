@@ -6,6 +6,21 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import EmpresaRol from "../EmpresaRol/EmpresaRol";
 import axios from "../axiosConfig";
 
+// Mock i18next
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key, fallbackOrOpts) => {
+      if (typeof fallbackOrOpts === "string") return fallbackOrOpts;
+      if (fallbackOrOpts && fallbackOrOpts.count != null) return `+${fallbackOrOpts.count}`;
+      return key;
+    },
+    i18n: {
+      changeLanguage: vi.fn(),
+      language: "es",
+    },
+  }),
+}));
+
 // Mock axios
 vi.mock("../axiosConfig", () => ({
   default: {
