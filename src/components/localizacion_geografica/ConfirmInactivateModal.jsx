@@ -7,12 +7,13 @@
  |   Fecha    | Versión |      Autor           | Descripción del cambio      |
  +------------+---------+----------------------+-----------------------------+
  | 2026-05-23 | 1.0.0   | Jeisson Sanchez      | Creación del archivo.       |
- +------------+---------+----------------------+-----------------------------+
  | 2026-06-06 | 0.4.0   | Jeisson Sanchez      | Ajuste i18n y estilos.      |
+ | 2026-08-25 | 0.4.0   | Jeisson Sanchez      | [Issue #273] Agregar PropTypes |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 
 import React from "react";
+import PropTypes from "prop-types";
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
@@ -77,3 +78,13 @@ export default function ConfirmInactivateModal({
     </Dialog>
   );
 }
+
+ConfirmInactivateModal.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onConfirm: PropTypes.func.isRequired,
+  title: PropTypes.string,
+  itemName: PropTypes.string,
+  isActivating: PropTypes.bool,
+  impactMessage: PropTypes.array,
+};

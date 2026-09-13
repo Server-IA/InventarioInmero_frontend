@@ -7,12 +7,13 @@
  |   Fecha    | Versión |      Autor           | Descripción del cambio      |
  +------------+---------+----------------------+-----------------------------+
  | 2026-05-23 | 1.0.0   | Jeisson Sanchez      | Creación del archivo.       |
- +------------+---------+----------------------+-----------------------------+
  | 2026-06-06 | 0.4.0   | Jeisson Sanchez      | Ajuste i18n y estilos.      |
+ | 2026-08-25 | 0.4.0   | Jeisson Sanchez      | [Issue #273] Agregar PropTypes |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 
 import React, { useMemo, useState } from "react";
+import PropTypes from "prop-types";
 import { Dialog, DialogContent, DialogTitle, IconButton, Stack, Typography } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useTranslation } from "react-i18next";
@@ -26,7 +27,7 @@ export default function MunicipiosListModal({
   onClose,
   paisContext,
   deptoContext,
-  municipios,
+  municipios = [],
   onAdd,
   onEdit,
   onInactivate,
@@ -83,3 +84,15 @@ export default function MunicipiosListModal({
     </Dialog>
   );
 }
+
+MunicipiosListModal.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  paisContext: PropTypes.object,
+  deptoContext: PropTypes.object,
+  municipios: PropTypes.array,
+  onAdd: PropTypes.func.isRequired,
+  onEdit: PropTypes.func.isRequired,
+  onInactivate: PropTypes.func.isRequired,
+  onOpenFilter: PropTypes.func.isRequired,
+};

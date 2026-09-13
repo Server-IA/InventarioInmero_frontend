@@ -7,12 +7,13 @@
  |   Fecha    | Versión |      Autor           | Descripción del cambio      |
  +------------+---------+----------------------+-----------------------------+
  | 2026-05-23 | 1.0.0   | Jeisson Sanchez      | Creación del archivo.       |
- +------------+---------+----------------------+-----------------------------+
  | 2026-06-06 | 0.4.0   | Jeisson Sanchez      | Ajuste i18n y estilos.      |
+ | 2026-08-25 | 0.4.0   | Jeisson Sanchez      | [Issue #273] Agregar PropTypes |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 
 import React, { useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, TextField } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
@@ -103,11 +104,17 @@ export default function FiltroModal({ open, onClose, onFilter, currentFilters })
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClear}>{t("common.actions.clear")}</Button>
-        <Button onClick={onClose}>{t("common.actions.cancel")}</Button>
         <Button onClick={handleFilter} variant="contained">
-          {t("localizacionGeografica.actions.filter")}
+          {t("common.actions.apply")}
         </Button>
       </DialogActions>
     </Dialog>
   );
 }
+
+FiltroModal.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onFilter: PropTypes.func.isRequired,
+  currentFilters: PropTypes.object,
+};

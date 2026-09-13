@@ -7,12 +7,13 @@
  |   Fecha    | Versión |      Autor           | Descripción del cambio      |
  +------------+---------+----------------------+-----------------------------+
  | 2026-05-23 | 1.0.0   | Jeisson Sanchez      | Creación del archivo.       |
- +------------+---------+----------------------+-----------------------------+
  | 2026-06-06 | 0.4.0   | Jeisson Sanchez      | Ajuste i18n y estilos.      |
+ | 2026-08-25 | 0.4.0   | Jeisson Sanchez      | [Issue #273] Conectar a backend y PropTypes |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 
 import React, { useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
@@ -98,3 +99,12 @@ export default function MunicipioModal({ open, onClose, onSave, municipioToEdit,
     </Dialog>
   );
 }
+
+MunicipioModal.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSave: PropTypes.func.isRequired,
+  municipioToEdit: PropTypes.object,
+  paisContext: PropTypes.object,
+  deptoContext: PropTypes.object,
+};

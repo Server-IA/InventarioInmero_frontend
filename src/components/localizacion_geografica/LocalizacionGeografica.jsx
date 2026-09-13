@@ -7,16 +7,18 @@
  |   Fecha    | Versión |      Autor           | Descripción del cambio      |
  +------------+---------+----------------------+-----------------------------+
  | 2026-05-23 | 1.0.0   | Jeisson Sanchez      | Creación del archivo.       |
- +------------+---------+----------------------+-----------------------------+
  | 2026-06-06 | 0.4.0   | Jeisson Sanchez      | Ajuste i18n y estilos.      |
+ | 2026-08-25 | 0.4.0   | Jeisson Sanchez      | [Issue #273] Conectar modulo a endpoints reales de backend |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Box, Button, MenuItem, Select, Tooltip } from "@mui/material";
 import { Add, Check, Close, Edit } from "@mui/icons-material";
 import { alpha, useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
+import axios from "../axiosConfig";
+import MessageSnackBar from "../MessageSnackBar.jsx";
 
 import AppDataGrid from "../common/AppDataGrid.jsx";
 import GridActionBar from "../common/GridActionBar.jsx";
@@ -32,32 +34,24 @@ const ACTIVE_STATUS = "Activo";
 const INACTIVE_STATUS = "Inactivo";
 const ALL_STATUS = "Todos";
 
-const initialPaises = [
-  { id: 1, nombre: "Colombia", codigo: "170", acronimo: "COL", estado: ACTIVE_STATUS },
-  { id: 2, nombre: "Argentina", codigo: "032", acronimo: "ARG", estado: ACTIVE_STATUS },
-];
-
-const initialDepartamentos = [
-  { id: 1, paisId: 1, nombre: "Huila", codigo: "41", acronimo: "HUI", estado: ACTIVE_STATUS },
-  { id: 2, paisId: 1, nombre: "Antioquia", codigo: "05", acronimo: "ANT", estado: ACTIVE_STATUS },
-];
-
-const initialMunicipios = [
-  { id: 1, departamentoId: 1, nombre: "Neiva", codigo: "41001", acronimo: "NEI", estado: ACTIVE_STATUS },
-  { id: 2, departamentoId: 1, nombre: "Pitalito", codigo: "41551", acronimo: "PIT", estado: ACTIVE_STATUS },
-];
-
 export default function LocalizacionGeografica() {
   const theme = useTheme();
   const { t } = useTranslation();
   const isDark = theme.palette.mode === "dark";
-  const [paises, setPaises] = useState(initialPaises);
-  const [departamentos, setDepartamentos] = useState(initialDepartamentos);
-  const [municipios, setMunicipios] = useState(initialMunicipios);
-  const [selectedPaisId, setSelectedPaisId] = useState(paises[0]?.id || "");
+  const [paises, setPaises] = useState([]);
+  const [departamentos, setDepartamentos] = useState([]);
+  const [municipios, setMunicipios] = useState([]);
+  const [selectedPaisId, setSelectedPaisId] = useState("");
   const [selectedDeptoId, setSelectedDeptoId] = useState(null);
   const [deptoFilters, setDeptoFilters] = useState(null);
   const [munFilters, setMunFilters] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({
+    open: false,
+    severity: "success",
+    text: "",
+  });
+
   const [modalState, setModalState] = useState({
     pais: false,
     depto: false,
@@ -72,6 +66,107 @@ export default function LocalizacionGeografica() {
     item: null,
     isActivating: false,
   });
+
+  const loadPaises = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get("/v1/pais");
+      const list = Array.isArray(res.data) ? res.data : [];
+      const mapped = list.map((p) => ({
+        id: p.id,
+        nombre: p.nombre,
+        codigo: String(p.codigo ?? ""),
+        acronimo: p.acronimo ?? "",
+        estadoId: p.estadoId,
+        estado: p.estadoId === 1 ? ACTIVE_STATUS : INACTIVE_STATUS,
+      }));
+      setPaises(mapped);
+      setSelectedPaisId((prev) => {
+        if (prev && mapped.some((p) => p.id === prev)) return prev;
+        return mapped[0]?.id || "";
+      });
+    } catch (err) {
+      console.error("Error cargando paises:", err);
+      setMessage({
+        open: true,
+        severity: "error",
+        text: err.response?.data?.detail || err.response?.data?.message || t("localizacionGeografica.messages.loadError", "Error al cargar países"),
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [t]);
+
+  const loadDepartamentos = useCallback(async (paisId) => {
+    if (!paisId) {
+      setDepartamentos([]);
+      return;
+    }
+    try {
+      setLoading(true);
+      const res = await axios.get(`/v1/departamento?paisId=${paisId}`);
+      const list = Array.isArray(res.data) ? res.data : [];
+      const mapped = list.map((d) => ({
+        id: d.id,
+        paisId: d.paisId,
+        nombre: d.nombre,
+        codigo: String(d.codigo ?? ""),
+        acronimo: d.acronimo ?? "",
+        estadoId: d.estadoId,
+        estado: d.estadoId === 1 ? ACTIVE_STATUS : INACTIVE_STATUS,
+      }));
+      setDepartamentos(mapped);
+    } catch (err) {
+      console.error("Error cargando departamentos:", err);
+      setDepartamentos([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const loadMunicipios = useCallback(async (deptoId) => {
+    if (!deptoId) {
+      setMunicipios([]);
+      return;
+    }
+    try {
+      const res = await axios.get(`/v1/municipio?departamentoId=${deptoId}`);
+      const list = Array.isArray(res.data) ? res.data : [];
+      const mapped = list.map((m) => ({
+        id: m.id,
+        departamentoId: m.departamentoId,
+        nombre: m.nombre,
+        codigo: String(m.codigo ?? ""),
+        acronimo: m.acronimo ?? "",
+        estadoId: m.estadoId,
+        estado: m.estadoId === 1 ? ACTIVE_STATUS : INACTIVE_STATUS,
+      }));
+      setMunicipios(mapped);
+    } catch (err) {
+      console.error("Error cargando municipios:", err);
+      setMunicipios([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadPaises();
+  }, [loadPaises]);
+
+  useEffect(() => {
+    if (selectedPaisId) {
+      loadDepartamentos(selectedPaisId);
+    } else {
+      setDepartamentos([]);
+    }
+  }, [selectedPaisId, loadDepartamentos]);
+
+  useEffect(() => {
+    if (selectedDeptoId) {
+      loadMunicipios(selectedDeptoId);
+    } else {
+      setMunicipios([]);
+    }
+  }, [selectedDeptoId, loadMunicipios]);
 
   const selectedPais = paises.find((pais) => pais.id === selectedPaisId);
   const selectedDepto = departamentos.find((depto) => depto.id === selectedDeptoId);
@@ -116,58 +211,174 @@ export default function LocalizacionGeografica() {
     setModalState((prev) => ({ ...prev, [name]: false }));
   };
 
-  const handleSavePais = (data) => {
-    if (actionContext.item) {
-      setPaises((prev) => prev.map((pais) => (pais.id === actionContext.item.id ? { ...pais, ...data } : pais)));
-      return;
+  const handleSavePais = async (data) => {
+    try {
+      const payload = {
+        nombre: data.nombre,
+        codigo: Number(data.codigo),
+        acronimo: (data.acronimo || "").toUpperCase(),
+        estadoId: 1,
+      };
+      if (actionContext.item) {
+        payload.id = actionContext.item.id;
+        payload.estadoId = actionContext.item.estadoId ?? 1;
+        await axios.put(`/v1/pais/${actionContext.item.id}`, payload);
+      } else {
+        await axios.post("/v1/pais", payload);
+      }
+      setMessage({
+        open: true,
+        severity: "success",
+        text: actionContext.item
+          ? t("localizacionGeografica.messages.paisUpdated", "País actualizado con éxito")
+          : t("localizacionGeografica.messages.paisCreated", "País creado con éxito"),
+      });
+      await loadPaises();
+    } catch (err) {
+      const detail = err.response?.data?.detail || err.response?.data?.message || err.message;
+      setMessage({
+        open: true,
+        severity: "error",
+        text: `${t("localizacionGeografica.messages.saveError", "Error al guardar país:")} ${detail}`,
+      });
     }
-
-    const newId = paises.length ? Math.max(...paises.map((pais) => pais.id)) + 1 : 1;
-    setPaises((prev) => [...prev, { id: newId, ...data, estado: ACTIVE_STATUS }]);
-    setSelectedPaisId(newId);
   };
 
-  const handleSaveDepto = (data) => {
-    if (actionContext.item) {
-      setDepartamentos((prev) => prev.map((depto) => (depto.id === actionContext.item.id ? { ...depto, ...data } : depto)));
-      return;
+  const handleSaveDepto = async (data) => {
+    try {
+      const payload = {
+        paisId: Number(selectedPaisId),
+        nombre: data.nombre,
+        codigo: Number(data.codigo),
+        acronimo: (data.acronimo || "").toUpperCase(),
+        estadoId: 1,
+      };
+      if (actionContext.item) {
+        payload.id = actionContext.item.id;
+        payload.estadoId = actionContext.item.estadoId ?? 1;
+        await axios.put(`/v1/departamento/${actionContext.item.id}`, payload);
+      } else {
+        await axios.post("/v1/departamento", payload);
+      }
+      setMessage({
+        open: true,
+        severity: "success",
+        text: actionContext.item
+          ? t("localizacionGeografica.messages.deptoUpdated", "Departamento actualizado con éxito")
+          : t("localizacionGeografica.messages.deptoCreated", "Departamento creado con éxito"),
+      });
+      await loadDepartamentos(selectedPaisId);
+    } catch (err) {
+      const detail = err.response?.data?.detail || err.response?.data?.message || err.message;
+      setMessage({
+        open: true,
+        severity: "error",
+        text: `${t("localizacionGeografica.messages.saveError", "Error al guardar departamento:")} ${detail}`,
+      });
     }
-
-    const newId = departamentos.length ? Math.max(...departamentos.map((depto) => depto.id)) + 1 : 1;
-    setDepartamentos((prev) => [...prev, { id: newId, paisId: selectedPaisId, ...data, estado: ACTIVE_STATUS }]);
   };
 
-  const handleSaveMunicipio = (data) => {
-    if (actionContext.item) {
-      setMunicipios((prev) => prev.map((municipio) => (municipio.id === actionContext.item.id ? { ...municipio, ...data } : municipio)));
-      return;
+  const handleSaveMunicipio = async (data) => {
+    try {
+      const payload = {
+        departamentoId: Number(selectedDeptoId),
+        nombre: data.nombre,
+        codigo: Number(data.codigo),
+        acronimo: (data.acronimo || "").toUpperCase(),
+        estadoId: 1,
+      };
+      if (actionContext.item) {
+        payload.id = actionContext.item.id;
+        payload.estadoId = actionContext.item.estadoId ?? 1;
+        await axios.put(`/v1/municipio/${actionContext.item.id}`, payload);
+      } else {
+        await axios.post("/v1/municipio", payload);
+      }
+      setMessage({
+        open: true,
+        severity: "success",
+        text: actionContext.item
+          ? t("localizacionGeografica.messages.municipioUpdated", "Municipio actualizado con éxito")
+          : t("localizacionGeografica.messages.municipioCreated", "Municipio creado con éxito"),
+      });
+      await loadMunicipios(selectedDeptoId);
+    } catch (err) {
+      const detail = err.response?.data?.detail || err.response?.data?.message || err.message;
+      setMessage({
+        open: true,
+        severity: "error",
+        text: `${t("localizacionGeografica.messages.saveError", "Error al guardar municipio:")} ${detail}`,
+      });
     }
-
-    const newId = municipios.length ? Math.max(...municipios.map((municipio) => municipio.id)) + 1 : 1;
-    setMunicipios((prev) => [...prev, { id: newId, departamentoId: selectedDeptoId, ...data, estado: ACTIVE_STATUS }]);
   };
 
-  const handleConfirmAction = () => {
+  const handleConfirmAction = async () => {
     const { type, item, isActivating } = actionContext;
-    const nextStatus = isActivating ? ACTIVE_STATUS : INACTIVE_STATUS;
+    if (!item) return;
 
-    if (type === "pais") {
-      setPaises((prev) => prev.map((pais) => (pais.id === item.id ? { ...pais, estado: nextStatus } : pais)));
-      if (!isActivating) {
-        const deptoIds = departamentos.filter((depto) => depto.paisId === item.id).map((depto) => depto.id);
-        setDepartamentos((prev) => prev.map((depto) => (depto.paisId === item.id ? { ...depto, estado: INACTIVE_STATUS } : depto)));
-        setMunicipios((prev) => prev.map((municipio) => (deptoIds.includes(municipio.departamentoId) ? { ...municipio, estado: INACTIVE_STATUS } : municipio)));
+    try {
+      if (type === "pais") {
+        if (isActivating) {
+          await axios.put(`/v1/pais/${item.id}`, {
+            id: item.id,
+            nombre: item.nombre,
+            codigo: Number(item.codigo),
+            acronimo: item.acronimo,
+            estadoId: 1,
+          });
+        } else {
+          await axios.delete(`/v1/pais/${item.id}`);
+        }
+        await loadPaises();
+        if (selectedPaisId) await loadDepartamentos(selectedPaisId);
+      } else if (type === "depto") {
+        if (isActivating) {
+          await axios.put(`/v1/departamento/${item.id}`, {
+            id: item.id,
+            paisId: selectedPaisId,
+            nombre: item.nombre,
+            codigo: Number(item.codigo),
+            acronimo: item.acronimo,
+            estadoId: 1,
+          });
+        } else {
+          await axios.delete(`/v1/departamento/${item.id}`);
+        }
+        await loadDepartamentos(selectedPaisId);
+        if (selectedDeptoId) await loadMunicipios(selectedDeptoId);
+      } else if (type === "municipio") {
+        if (isActivating) {
+          await axios.put(`/v1/municipio/${item.id}`, {
+            id: item.id,
+            departamentoId: selectedDeptoId,
+            nombre: item.nombre,
+            codigo: Number(item.codigo),
+            acronimo: item.acronimo,
+            estadoId: 1,
+          });
+        } else {
+          await axios.delete(`/v1/municipio/${item.id}`);
+        }
+        if (selectedDeptoId) await loadMunicipios(selectedDeptoId);
       }
-    } else if (type === "depto") {
-      setDepartamentos((prev) => prev.map((depto) => (depto.id === item.id ? { ...depto, estado: nextStatus } : depto)));
-      if (!isActivating) {
-        setMunicipios((prev) => prev.map((municipio) => (municipio.departamentoId === item.id ? { ...municipio, estado: INACTIVE_STATUS } : municipio)));
-      }
-    } else if (type === "municipio") {
-      setMunicipios((prev) => prev.map((municipio) => (municipio.id === item.id ? { ...municipio, estado: nextStatus } : municipio)));
+
+      setMessage({
+        open: true,
+        severity: "success",
+        text: isActivating
+          ? t("localizacionGeografica.messages.activatedSuccess", "Registro activado con éxito")
+          : t("localizacionGeografica.messages.inactivatedSuccess", "Registro inactivado con éxito"),
+      });
+    } catch (err) {
+      const detail = err.response?.data?.detail || err.response?.data?.message || err.message;
+      setMessage({
+        open: true,
+        severity: "error",
+        text: `${t("localizacionGeografica.messages.actionError", "Error al cambiar estado:")} ${detail}`,
+      });
+    } finally {
+      closeModal("confirm");
     }
-
-    closeModal("confirm");
   };
 
   const getImpactMessage = () => {
@@ -237,6 +448,8 @@ export default function LocalizacionGeografica() {
     <Box sx={{ width: "100%", p: 3, color: "text.primary", minHeight: "80vh" }}>
       <SectionHeader titleKey="localizacionGeografica.title" />
 
+      <MessageSnackBar message={message} setMessage={setMessage} />
+
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 2, mb: 4 }}>
         <Select
           value={selectedPaisId}
@@ -298,6 +511,7 @@ export default function LocalizacionGeografica() {
       <AppDataGrid
         rows={deptosByPais}
         columns={deptoColumns}
+        loading={loading}
         selectedRow={selectedDepto}
         setSelectedRow={(row) => setSelectedDeptoId(row?.id || null)}
         containerSx={{ borderRadius: 4 }}
